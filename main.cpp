@@ -5,6 +5,7 @@ int main () {
     std::ifstream infile("huobi.log");
     std::string line;
     SnapShot current;
+    std::ofstream outfile("huobi-analysis.log");
     if (std::getline(infile, line))
         current.init(line);
     else {
@@ -13,14 +14,9 @@ int main () {
     }
     while (std::getline(infile, line))
     {
-        //try {
-            Update u(line);
-            current.append(u);
-            std::cout << current;
-        //    break;
-        //} catch (std::domain_error &e) {
-        //    std::cout << e.what() << std::endl;
-        //}
+        Update u(line);
+        current.append(u);
+        outfile << current;
     }
     return 0;
 }

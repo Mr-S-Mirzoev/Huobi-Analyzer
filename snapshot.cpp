@@ -68,9 +68,12 @@ std::ostream& operator<<(std::ostream& os, const SnapShot& sh) {/*
     for (auto it = sh.bids.begin(); it != sh.bids.end(); ++it) {
         os << (*it).first << ' ' << (*it).second << std::endl;
     }*/
-    double best_ask = (*(sh.asks.rbegin())).first;
-    double best_bid = (*(sh.bids.begin())).first;
+    double best_ask_price = (*(sh.asks.rbegin())).first;
+    double best_ask_amount = (*(sh.asks.rbegin())).second;
+    double best_bid_price = (*(sh.bids.begin())).first;
+    double best_bid_amount = (*(sh.bids.begin())).second;
 
-    os << "[" << sh.timeHR << "] " << best_ask << ' ' << best_bid << std::endl;
+    os << "[" << sh.timestamp << SEP << best_bid_price << ", " << best_bid_amount << SEP;
+    os << best_ask_price << ", " << best_ask_amount << "]" << std::endl;
     return os;
 }

@@ -3,6 +3,7 @@
 
 #include "update.h"
 #include <string>
+#define SEP "],\t\t["
 
 class SnapShot {
     unsigned timestamp;

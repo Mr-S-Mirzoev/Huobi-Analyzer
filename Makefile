@@ -1,6 +1,6 @@
 all: huobi-analyzer
 
-huobi-analizer: main.o update.o snapshot.o
+huobi-analyzer: main.o update.o snapshot.o
 	g++ main.o update.o snapshot.o -o huobi-analyzer
 
 main.o: main.cpp
