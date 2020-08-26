@@ -16,6 +16,7 @@ int main () {
     {
         Update u(line);
         current.append(u);
+        current.get_bests();
         outfile << current;
     }
     return 0;

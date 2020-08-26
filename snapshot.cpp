@@ -59,21 +59,15 @@ void SnapShot::append (const Update &u) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const SnapShot& sh) {/*
-    os << "Asks:" << std::endl;
-    for (auto it = sh.asks.begin(); it != sh.asks.end(); ++it) {
-        os << (*it).first << ' ' << (*it).second << std::endl;
-    }
-    os << "Bids:" << std::endl;
-    for (auto it = sh.bids.begin(); it != sh.bids.end(); ++it) {
-        os << (*it).first << ' ' << (*it).second << std::endl;
-    }*/
-    double best_ask_price = (*(sh.asks.rbegin())).first;
-    double best_ask_amount = (*(sh.asks.rbegin())).second;
-    double best_bid_price = (*(sh.bids.begin())).first;
-    double best_bid_amount = (*(sh.bids.begin())).second;
+void SnapShot::get_bests() {
+    ba_price = (*(asks.rbegin())).first;
+    ba_amount = (*(asks.rbegin())).second;
+    bb_price = (*(bids.begin())).first;
+    bb_amount = (*(bids.begin())).second;
+}
 
-    os << "[" << sh.timestamp << SEP << best_bid_price << ", " << best_bid_amount << SEP;
-    os << best_ask_price << ", " << best_ask_amount << "]" << std::endl;
+std::ostream& operator<<(std::ostream& os, const SnapShot& sh) {
+    os << "[" << sh.timestamp << SEP << sh.bb_price << ", " << sh.bb_amount << SEP;
+    os << sh.ba_price << ", " << sh.ba_amount << "]" << std::endl;
     return os;
 }
