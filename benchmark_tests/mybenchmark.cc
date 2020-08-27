@@ -225,6 +225,187 @@ state.ResumeTiming();
 // Register the function as a benchmark
 BENCHMARK(BM_Insert_On_UnorderedMaps)->Iterations(100000);
 
+static void BM_FindMax_On_Maps(benchmark::State& state) {
+	std::map <double, unsigned long> asks, bids;
+	bool flag;
+	double bb_price, bb_amount, ba_price, ba_amount;
+	unsigned max = 0;
+	std::vector <std::pair<double, unsigned long>> a, b;
+	for (auto _ : state) {
 
+state.PauseTiming ();
+		if (asks.size() > max)
+			max = asks.size();
+		if (bids.size() > max)
+			max = bids.size();
+
+		std::vector <double> vals;
+		for (auto it = asks.begin(); it != asks.end(); ++it)
+			vals.push_back(it->first);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
+		vals.clear();
+
+		for (auto it = bids.begin(); it != bids.end(); ++it)
+			vals.push_back(it->first);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
+		vals.clear();
+
+		if (flag) { // If first
+			if (!a.empty())
+				for (auto it = a.begin(); it != a.end(); ++it) 
+					asks.insert({(*it).first, (*it).second});
+			if (!b.empty())
+				for (auto it = b.begin(); it != b.end(); ++it)
+					bids.insert({(*it).first, (*it).second});
+			flag = false;
+		} else {
+			if (!(a.empty())) {
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						asks.insert({it->first, it->second});
+					else
+						asks.erase(it->first);
+				}
+			}
+			if (!(b.empty())) {
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						bids.insert({it->first, it->second});
+					else
+						bids.erase(it->first);
+				}
+			}
+		}
+state.ResumeTiming();
+		ba_price = (*(asks.rbegin())).first;
+		ba_amount = (*(asks.rbegin())).second;
+		bb_price = (*(bids.begin())).first;
+		bb_amount = (*(bids.begin())).second;
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(BM_FindMax_On_Maps)->Iterations(100000);
+
+// Define another benchmark
+static void BM_FindMax_On_UnorderedMaps(benchmark::State& state) {
+	std::unordered_map <double, unsigned long> asks, bids;
+	bool flag;
+	double asks_max, bids_min;
+	unsigned max = 0;
+	unsigned long asks_amount, bids_amount;
+	bool ask_max_invalidated = false, bid_min_invalidated = false;
+	std::vector <std::pair<double, unsigned long>> a, b;
+	for (auto _ : state) {
+state.PauseTiming ();
+		if (asks.size() > max)
+			max = asks.size();
+		if (bids.size() > max)
+			max = bids.size();
+
+		std::vector <double> vals;
+		for (auto it = asks.begin(); it != asks.end(); ++it)
+			vals.push_back(it->first);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
+		vals.clear();
+
+		for (auto it = bids.begin(); it != bids.end(); ++it)
+			vals.push_back(it->first);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
+		vals.clear();
+
+		if (flag) {
+			if (!a.empty())
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					if (!ask_max_invalidated && ((*it).first > asks_max)) {
+						asks_max = (*it).first;
+						asks_amount = (*it).second;
+					}
+					asks.insert({(*it).first, (*it).second});
+				}
+			if (!b.empty())
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					if (!bid_min_invalidated && ((*it).first < bids_min)) {
+						bids_min = (*it).first;
+						bids_amount = (*it).second;
+					}
+					bids.insert({(*it).first, (*it).second});
+				}
+			flag = false;
+		} else {
+			if (!(a.empty())) {
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0) {
+						if (!ask_max_invalidated && ((*it).first > asks_max)) {
+							asks_max = (*it).first;
+							asks_amount = (*it).second;
+						}
+						asks.insert({(*it).first, (*it).second});
+					} else {
+						asks.erase(it->first);
+						if (it->first == asks_max)
+							ask_max_invalidated = true;
+					}
+				}
+			}
+			if (!(b.empty())) {
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0) {
+						if (!bid_min_invalidated && ((*it).first < bids_min)) {
+							bids_min = (*it).first;
+							bids_amount = (*it).second;
+						}
+						bids.insert({(*it).first, (*it).second});
+					} else {
+						bids.erase(it->first);
+						if (it->first == bids_min)
+							bid_min_invalidated = true;
+					}
+				}
+			}
+		}
+state.ResumeTiming();
+		if (bid_min_invalidated) {
+			bool not_set = true;
+
+			for (auto val : bids) {
+				if (not_set) {
+					not_set = false;
+					bids_min = val.first;
+					bids_amount = val.second;
+				}
+				if (val.first < bids_min) {
+					bids_min = val.first;
+					bids_amount = val.second;
+				}
+			}
+			bid_min_invalidated = false;
+		}
+
+		if (ask_max_invalidated) {
+			bool not_set = true;
+
+			for (auto val : asks) {
+				if (not_set) {
+					not_set = false;
+					asks_max = val.first;
+					asks_amount = val.second;
+				}
+				if (val.first > asks_max) {
+					asks_max = val.first;
+					asks_amount = val.second;
+				}
+			}
+			ask_max_invalidated = false;
+		}
+state.PauseTiming();
+	}
+	//std::cout << max << std::endl;
+}
+// Register the function as a benchmark
+BENCHMARK(BM_FindMax_On_UnorderedMaps)->Iterations(100000);
 
 BENCHMARK_MAIN();
