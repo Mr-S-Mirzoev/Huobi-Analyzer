@@ -27,7 +27,7 @@ std::vector <std::pair<double, unsigned long>> generateRandomUpdate(double min, 
 		if (noNulls || values.empty()) {
 			v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 		} else {
-			if ((rand() % 3 > 0)) {
+			if ((rand() % 3 > 0) || cvalues.empty()) {
 				v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 			} else {
 				auto it = cvalues.begin();
@@ -45,22 +45,26 @@ static void BM_Insert_On_Maps(benchmark::State& state) {
 	unsigned max = 0;
 	std::vector <std::pair<double, unsigned long>> a, b;
 	for (auto _ : state) {
-		state.PauseTiming ();
+
+state.PauseTiming ();
 		if (asks.size() > max)
 			max = asks.size();
 		if (bids.size() > max)
 			max = bids.size();
+
 		std::vector <double> vals;
 		for (auto it = asks.begin(); it != asks.end(); ++it)
 			vals.push_back(it->first);
-		a = generateRandomUpdate(10000.0, 11000.0, flag, vals);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
 		vals.clear();
+
 		for (auto it = bids.begin(); it != bids.end(); ++it)
 			vals.push_back(it->first);
-		b = generateRandomUpdate(11000.0, 12000.0, flag, vals);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
-		state.ResumeTiming();
-		if (flag) {
+state.ResumeTiming();
+
+		if (flag) { // If first
 			if (!a.empty())
 				for (auto it = a.begin(); it != a.end(); ++it) 
 					asks.insert({(*it).first, (*it).second});
@@ -88,14 +92,14 @@ static void BM_Insert_On_Maps(benchmark::State& state) {
 				}
 			}
 		}
-		state.PauseTiming ();
+
+state.PauseTiming ();
 		ba_price = (*(asks.rbegin())).first;
 		ba_amount = (*(asks.rbegin())).second;
 		bb_price = (*(bids.begin())).first;
 		bb_amount = (*(bids.begin())).second;
-		state.ResumeTiming();
+state.ResumeTiming();
 	}
-	//std::cout << max << std::endl;
 }
 // Register the function as a benchmark
 BENCHMARK(BM_Insert_On_Maps)->Iterations(100000);
@@ -110,21 +114,23 @@ static void BM_Insert_On_UnorderedMaps(benchmark::State& state) {
 	bool ask_max_invalidated = false, bid_min_invalidated = false;
 	std::vector <std::pair<double, unsigned long>> a, b;
 	for (auto _ : state) {
-		state.PauseTiming ();
+state.PauseTiming ();
 		if (asks.size() > max)
 			max = asks.size();
 		if (bids.size() > max)
 			max = bids.size();
+
 		std::vector <double> vals;
 		for (auto it = asks.begin(); it != asks.end(); ++it)
 			vals.push_back(it->first);
-		a = generateRandomUpdate(10000.0, 11000.0, flag, vals);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
 		vals.clear();
+
 		for (auto it = bids.begin(); it != bids.end(); ++it)
 			vals.push_back(it->first);
-		b = generateRandomUpdate(11000.0, 12000.0, flag, vals);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
-		state.ResumeTiming();
+state.ResumeTiming();
 		if (flag) {
 			if (!a.empty())
 				for (auto it = a.begin(); it != a.end(); ++it) {
@@ -177,7 +183,7 @@ static void BM_Insert_On_UnorderedMaps(benchmark::State& state) {
 				}
 			}
 		}
-		state.PauseTiming ();
+state.PauseTiming ();
 		if (bid_min_invalidated) {
 			bool not_set = true;
 
@@ -212,7 +218,7 @@ static void BM_Insert_On_UnorderedMaps(benchmark::State& state) {
 			ask_max_invalidated = false;
 		}
 
-		state.ResumeTiming();
+state.ResumeTiming();
 	}
 	//std::cout << max << std::endl;
 }
