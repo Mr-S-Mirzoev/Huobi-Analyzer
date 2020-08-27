@@ -13,7 +13,7 @@ using nlohmann::json;
 
 class Update {
     json info;
-    unsigned long timestamp;
+    unsigned long long timestamp;
     std::string timeHR;
     bool is_ping = false;
 public:

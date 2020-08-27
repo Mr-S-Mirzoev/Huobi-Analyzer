@@ -9,7 +9,7 @@ void SnapShot::init (const std::string &s) {
 
     pos = s.find(CURRENT_TIME_INDICATOR) + CURRENT_TIME_INDICATOR_LENGTH;
     pos_end = s.find(',', pos);
-    timestamp = std::stoul(s.substr(pos, pos_end));
+    timestamp = std::stoull(s.substr(pos, pos_end));
     
     pos = s.find(MESSAGE_START_INDICATOR, pos_end) + MESSAGE_START_INDICATOR_LENGTH;
     json info = json::parse(s.substr(pos));

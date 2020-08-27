@@ -6,10 +6,11 @@
 #define SEP "],\t\t["
 
 class SnapShot {
-    unsigned timestamp;
+    unsigned long long timestamp;
     std::string timeHR;
     std::map <double, unsigned long> asks, bids;
-    double bb_price, bb_amount, ba_price, ba_amount; // bb = best bid; ba = best asks
+    double bb_price, ba_price; // bb = best bid; ba = best asks
+    unsigned long bb_amount, ba_amount;
 public:
     SnapShot() {};
     void init(const std::string &s);
