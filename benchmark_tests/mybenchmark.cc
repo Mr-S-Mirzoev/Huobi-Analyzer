@@ -1,10 +1,13 @@
 #include <benchmark/benchmark.h>
 #include <fstream>
-#include <set>
 #include <array>
 #include <ctime>
+
 #include <map>
 #include <unordered_map>
+#include <list>
+#include "avl.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -27,7 +30,7 @@ std::vector <std::pair<double, unsigned long>> generateRandomUpdate(double min, 
 		if (noNulls || values.empty()) {
 			v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 		} else {
-			if ((rand() % 3 > 0) || cvalues.empty()) {
+			if (((rand() % 3 > 0) || cvalues.empty()) && cvalues.size() < 20) {
 				v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 			} else {
 				auto it = cvalues.begin();
@@ -37,6 +40,98 @@ std::vector <std::pair<double, unsigned long>> generateRandomUpdate(double min, 
 		}
 	return v;
 }
+
+static void BM_Insert_On_Lists(benchmark::State& state) {
+	std::list <std::pair<double, unsigned long>> asks, bids;
+	bool flag;
+	double bb_price, bb_amount, ba_price, ba_amount; /*
+	unsigned max = 0;
+	unsigned long long sumqa = 0, sumqb = 0;
+	unsigned q; */
+	std::vector <std::pair<double, unsigned long>> a, b;
+	for (auto _ : state) {
+
+state.PauseTiming ();
+/*
+		if (asks.size() > max)
+			max = asks.size();
+		if (bids.size() > max)
+			max = bids.size();
+
+		sumqa += asks.size();
+		sumqb += bids.size();
+		++q;
+*/
+		std::vector <double> vals;
+		for (auto it = asks.begin(); it != asks.end(); ++it)
+			vals.push_back(it->first);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
+		vals.clear();
+
+		for (auto it = bids.begin(); it != bids.end(); ++it)
+			vals.push_back(it->first);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
+		vals.clear();
+state.ResumeTiming();
+
+		if (flag) { // If first
+			if (!a.empty())
+				for (auto it = a.begin(); it != a.end(); ++it) 
+					asks.insert(asks.begin(), {(*it).first, (*it).second});
+			if (!b.empty())
+				for (auto it = b.begin(); it != b.end(); ++it)
+					bids.insert(bids.begin(), {(*it).first, (*it).second});
+			flag = false;
+		} else {
+			if (!(a.empty())) {
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						asks.insert(asks.begin(), {it->first, it->second});
+					else
+						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2)
+							if (it2->first == it->first)
+								asks.erase(it2);
+				}
+			}
+			if (!(b.empty())) {
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						bids.insert(bids.begin(), {it->first, it->second});
+					else
+						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
+							if (it2->first == it->first)
+								bids.erase(it2);
+				}
+			}
+		}
+
+state.PauseTiming ();
+		auto mina = std::min(asks.begin(), 
+							asks.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		ba_price = mina->first;
+		ba_amount = mina->second;
+		auto maxb = std::max(bids.begin(), 
+							bids.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		bb_price = maxb->first;
+		bb_amount = maxb->second;
+state.ResumeTiming();
+	}
+/*
+	std::cout << max << std::endl;
+	std::cout << sumqa / q << std::endl;
+	std::cout << sumqb / q << std::endl;
+*/
+}
+// Register the function as a benchmark
+BENCHMARK(BM_Insert_On_Lists)->Iterations(1000000);
 
 static void BM_Insert_On_Maps(benchmark::State& state) {
 	std::map <double, unsigned long> asks, bids;
@@ -102,9 +197,8 @@ state.ResumeTiming();
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(BM_Insert_On_Maps)->Iterations(100000);
+BENCHMARK(BM_Insert_On_Maps)->Iterations(1000000);
 
-// Define another benchmark
 static void BM_Insert_On_UnorderedMaps(benchmark::State& state) {
 	std::unordered_map <double, unsigned long> asks, bids;
 	bool flag;
@@ -223,7 +317,87 @@ state.ResumeTiming();
 	//std::cout << max << std::endl;
 }
 // Register the function as a benchmark
-BENCHMARK(BM_Insert_On_UnorderedMaps)->Iterations(100000);
+BENCHMARK(BM_Insert_On_UnorderedMaps)->Iterations(1000000);
+
+static void BM_FindMax_On_Lists(benchmark::State& state) {
+	std::list <std::pair<double, unsigned long>> asks, bids;
+	bool flag;
+	double bb_price, bb_amount, ba_price, ba_amount;
+//	unsigned max = 0;
+	std::vector <std::pair<double, unsigned long>> a, b;
+	for (auto _ : state) {
+
+state.PauseTiming (); /*
+		if (asks.size() > max)
+			max = asks.size();
+		if (bids.size() > max)
+			max = bids.size(); */
+
+		std::vector <double> vals;
+		for (auto it = asks.begin(); it != asks.end(); ++it)
+			vals.push_back(it->first);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
+		vals.clear();
+
+		for (auto it = bids.begin(); it != bids.end(); ++it)
+			vals.push_back(it->first);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
+		vals.clear();
+
+		if (flag) { // If first
+			if (!a.empty())
+				for (auto it = a.begin(); it != a.end(); ++it) 
+					asks.insert(asks.begin(), {(*it).first, (*it).second});
+			if (!b.empty())
+				for (auto it = b.begin(); it != b.end(); ++it)
+					bids.insert(bids.begin(), {(*it).first, (*it).second});
+			flag = false;
+		} else {
+			if (!(a.empty())) {
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						asks.insert(asks.begin(), {it->first, it->second});
+					else
+						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2)
+							if (it2->first == it->first)
+								asks.erase(it2);
+				}
+			}
+			if (!(b.empty())) {
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						bids.insert(bids.begin(), {it->first, it->second});
+					else
+						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
+							if (it2->first == it->first)
+								bids.erase(it2);
+				}
+			}
+		}
+
+state.ResumeTiming ();
+		auto mina = std::min(asks.begin(), 
+							asks.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		ba_price = mina->first;
+		ba_amount = mina->second;
+		auto maxb = std::max(bids.begin(), 
+							bids.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		bb_price = maxb->first;
+		bb_amount = maxb->second;
+state.PauseTiming();
+	}
+//	std::cout << max << std::endl;
+}
+// Register the function as a benchmark
+BENCHMARK(BM_FindMax_On_Lists)->Iterations(1000000);
 
 static void BM_FindMax_On_Maps(benchmark::State& state) {
 	std::map <double, unsigned long> asks, bids;
@@ -286,9 +460,8 @@ state.ResumeTiming();
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FindMax_On_Maps)->Iterations(100000);
+BENCHMARK(BM_FindMax_On_Maps)->Iterations(1000000);
 
-// Define another benchmark
 static void BM_FindMax_On_UnorderedMaps(benchmark::State& state) {
 	std::unordered_map <double, unsigned long> asks, bids;
 	bool flag;
@@ -406,6 +579,84 @@ state.PauseTiming();
 	//std::cout << max << std::endl;
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FindMax_On_UnorderedMaps)->Iterations(100000);
+BENCHMARK(BM_FindMax_On_UnorderedMaps)->Iterations(1000000);
+
+/*
+static void BM_FindMax_On_AVL_Tree(benchmark::State& state) {
+	AVL asks, bids;
+	bool flag;
+	double bb_price, bb_amount, ba_price, ba_amount;
+//	unsigned max = 0;
+	std::vector <std::pair<double, unsigned long>> a, b;
+	for (auto _ : state) {
+
+state.PauseTiming ();
+
+		std::vector <double> vals;
+		for (AVL::iterator it = asks.root; it.isEnd() ; it.next())
+			vals.push_back(it.curr()->key.first);
+		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
+		vals.clear();
+
+		for (AVL::iterator it = asks.root; it.isEnd() ; it.next())
+			vals.push_back(it.curr()->key.first);
+		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
+		vals.clear();
+
+		if (flag) { // If first
+			if (!a.empty())
+				for (auto it = a.begin(); it != a.end(); ++it) 
+					asks.insert({(*it).first, (*it).second});
+			if (!b.empty())
+				for (auto it = b.begin(); it != b.end(); ++it)
+					bids.insert({(*it).first, (*it).second});
+			flag = false;
+		} else {
+			if (!(a.empty())) {
+				for (auto it = a.begin(); it != a.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						asks.insert({it->first, it->second});
+					else
+						for (AVL::iterator it2 = asks.root; it2.isEnd() ; it2.next())
+							if (it2.curr()->key.first == it->first)
+								asks.remove(it2.curr()->key.first);
+				}
+			}
+			if (!(b.empty())) {
+				for (auto it = b.begin(); it != b.end(); ++it) {
+					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
+					if (it->second != 0)
+						bids.insert({it->first, it->second});
+					else
+						for (AVL::iterator it2 = asks.root; it2.isEnd() ; it2.next())
+							if (it2.curr()->key.first == it->first)
+								asks.remove(it2.curr()->key.first);
+				}
+			}
+		}
+
+state.ResumeTiming ();
+		auto mina = std::min(asks.begin(), 
+							asks.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		ba_price = mina->first;
+		ba_amount = mina->second;
+		auto maxb = std::max(bids.begin(), 
+							bids.end(), 
+							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
+			return a->first < b->first;
+		});
+		bb_price = maxb->first;
+		bb_amount = maxb->second;
+state.PauseTiming();
+	}
+//	std::cout << max << std::endl;
+}
+// Register the function as a benchmark
+BENCHMARK(BM_FindMax_On_Lists)->Iterations(1000000);
+*/
 
 BENCHMARK_MAIN();
