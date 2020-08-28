@@ -163,3 +163,37 @@
 			} \
 			askinv = false; \
 		}
+
+#define InsertVectorsonAVL(vector1, vector2, avl1, avl2, flag) if (flag) { \
+			if (!vector1.empty()) \
+				for (auto it = vector1.begin(); it != vector1.end(); ++it) \
+					avl1.insert((*it).first, (*it).second); \
+			if (!vector2.empty()) \
+				for (auto it = vector2.begin(); it != vector2.end(); ++it) \
+					avl2.insert((*it).first, (*it).second); \
+			flag = false; \
+		} else { \
+			if (!(vector1.empty())) { \
+				for (auto it = vector1.begin(); it != vector1.end(); ++it) { \
+					if (it->second != 0) \
+						avl1.insert(it->first, it->second); \
+					else \
+						avl1.remove(it->first); \
+				} \
+			} \
+			if (!(vector2.empty())) { \
+				for (auto it = vector2.begin(); it != vector2.end(); ++it) { \
+					if (it->second != 0) \
+						avl2.insert(it->first, it->second); \
+					else \
+						avl2.remove(it->first); \
+				} \
+			} \
+		} 
+
+#define FindMaxonAVL(ba_price, ba_amount, bb_price, bb_amount, avl1, avl2) AVL<double, unsigned long>::node *min = avl1.min(); \
+			ba_price = min->key; \
+			ba_amount = min->value; \
+		AVL<double, unsigned long>::node *max = avl2.max(); \
+			bb_price = max->key; \
+			bb_amount = max->value; 
