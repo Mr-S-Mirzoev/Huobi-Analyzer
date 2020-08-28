@@ -54,4 +54,4 @@ So we see that Unordered Maps (usually based on Hash - Tables) and Maps (ususall
 
 ## Conclusion
 
-My choice of data structure was quite good, unless AVL trees are better for this task than RB Trees.
+My choice of data structure was quite good (at least better than unordered maps and lists. still have to check if AVL trees are better than RB trees).
