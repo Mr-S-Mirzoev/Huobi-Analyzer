@@ -43,15 +43,17 @@ On eight-core processor:
     -----------------------------------------------------------------------------------------
     Benchmark                                               Time             CPU   Iterations
     -----------------------------------------------------------------------------------------
-    BM_Insert_On_Lists/iterations:1000000                 712 ns          716 ns      1000000
-    BM_Insert_On_Maps/iterations:1000000                  687 ns          692 ns      1000000
-    BM_Insert_On_UnorderedMaps/iterations:1000000         853 ns          857 ns      1000000
-    BM_FindMax_On_Lists/iterations:1000000                999 ns         1003 ns      1000000
-    BM_FindMax_On_Maps/iterations:1000000                 330 ns          332 ns      1000000
-    BM_FindMax_On_UnorderedMaps/iterations:1000000        977 ns          982 ns      1000000
+    BM_Insert_On_Lists/iterations:1000000                 736 ns          741 ns      1000000
+    BM_Insert_On_Maps/iterations:1000000                  719 ns          723 ns      1000000
+    BM_Insert_On_UnorderedMaps/iterations:1000000         859 ns          863 ns      1000000
+    BM_Insert_On_AVL/iterations:1000000                   690 ns          694 ns      1000000
+    BM_FindMax_On_Lists/iterations:1000000               1059 ns         1061 ns      1000000
+    BM_FindMax_On_Maps/iterations:1000000                 342 ns          343 ns      1000000
+    BM_FindMax_On_UnorderedMaps/iterations:1000000       1003 ns         1006 ns      1000000
+    BM_FindMax_On_AVL/iterations:1000000                  991 ns          992 ns      1000000
 
 So we see that Unordered Maps (usually based on Hash - Tables) and Maps (ususally implemented as Red and Black Trees) are operating nearly at the same speed on Insertion, but Unordered Maps are dramatically slower than Maps on Maximum Search, since (I guess), maximum invalidation is usual, so we have to find it again every time with O(N) complexity. Lists insuitability goes without saying.
 
 ## Conclusion
 
-My choice of data structure was quite good (at least better than unordered maps and lists. still have to check if AVL trees are better than RB trees).
+My choice of data structure was quite good. AVL trees are faster on insertions since they require one rotation in average on sorted sequences, although the search for maximum element is 3 times slower. Looks like the thing is in constant of O(log(n)) and the search for minimum relies on the node colour for RB trees
