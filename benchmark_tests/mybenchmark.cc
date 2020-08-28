@@ -8,6 +8,8 @@
 #include <list>
 #include "avl.hpp"
 
+#include "mybenchmark.h"
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -77,56 +79,10 @@ state.PauseTiming ();
 			vals.clear();
 state.ResumeTiming();
 
-		if (flag) { // If first
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) 
-					asks.insert(asks.begin(), {(*it).first, (*it).second});
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it)
-					bids.insert(bids.begin(), {(*it).first, (*it).second});
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					if (it->second != 0 || asks.empty()) {
-						asks.insert(asks.begin(), {it->first, it->second});
-					} else {
-						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2) {
-							if (it2->first == it->first) {
-								asks.erase(it2);
-								break;
-							}
-						}
-					}
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					if (it->second != 0 || bids.empty())
-						bids.insert(bids.begin(), {it->first, it->second});
-					else
-						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
-							if (it2->first == it->first) {
-								bids.erase(it2);
-								break;
-							}
-				}
-			}
-		}
+		InsertVectorsonLists(a, b, asks, bids, flag)
 
 state.PauseTiming ();
-		std::pair <double, unsigned long> mina;
-		for (auto x : asks)
-			if (x.first < mina.first)
-				mina = x;
-		ba_price = mina.first;
-		ba_amount = mina.second;
-		std::pair <double, unsigned long> maxb;
-		for (auto x : bids)
-			if (x.first > maxb.first)
-				maxb = x;
-		bb_price = maxb.first;
-		bb_amount = maxb.second;
+		FindMaxonLists(ba_price, ba_amount, bb_price, bb_amount, asks, bids)
 state.ResumeTiming();
 	}
 /*
@@ -165,40 +121,10 @@ state.PauseTiming ();
 		vals.clear();
 state.ResumeTiming();
 
-		if (flag) { // If first
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) 
-					asks.insert({(*it).first, (*it).second});
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it)
-					bids.insert({(*it).first, (*it).second});
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						asks.insert({it->first, it->second});
-					else
-						asks.erase(it->first);
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						bids.insert({it->first, it->second});
-					else
-						bids.erase(it->first);
-				}
-			}
-		}
+		InsertVectorsonMaps(a, b, asks, bids, flag)
 
 state.PauseTiming ();
-		ba_price = (*(asks.rbegin())).first;
-		ba_amount = (*(asks.rbegin())).second;
-		bb_price = (*(bids.begin())).first;
-		bb_amount = (*(bids.begin())).second;
+		FindMaxonMaps(ba_price, ba_amount, bb_price, bb_amount, asks, bids)
 state.ResumeTiming();
 	}
 }
@@ -231,92 +157,9 @@ state.PauseTiming ();
 		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
 state.ResumeTiming();
-		if (flag) {
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					if (!ask_max_invalidated && ((*it).first > asks_max)) {
-						asks_max = (*it).first;
-						asks_amount = (*it).second;
-					}
-					asks.insert({(*it).first, (*it).second});
-				}
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					if (!bid_min_invalidated && ((*it).first < bids_min)) {
-						bids_min = (*it).first;
-						bids_amount = (*it).second;
-					}
-					bids.insert({(*it).first, (*it).second});
-				}
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0) {
-						if (!ask_max_invalidated && ((*it).first > asks_max)) {
-							asks_max = (*it).first;
-							asks_amount = (*it).second;
-						}
-						asks.insert({(*it).first, (*it).second});
-					} else {
-						asks.erase(it->first);
-						if (it->first == asks_max)
-							ask_max_invalidated = true;
-					}
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0) {
-						if (!bid_min_invalidated && ((*it).first < bids_min)) {
-							bids_min = (*it).first;
-							bids_amount = (*it).second;
-						}
-						bids.insert({(*it).first, (*it).second});
-					} else {
-						bids.erase(it->first);
-						if (it->first == bids_min)
-							bid_min_invalidated = true;
-					}
-				}
-			}
-		}
+		InsertVectorsonUnorderedMaps(a, b, asks, bids, flag, bid_min_invalidated, ask_max_invalidated, bids_min, bids_amount, asks_max, asks_amount)
 state.PauseTiming ();
-		if (bid_min_invalidated) {
-			bool not_set = true;
-
-			for (auto val : bids) {
-				if (not_set) {
-					not_set = false;
-					bids_min = val.first;
-					bids_amount = val.second;
-				}
-				if (val.first < bids_min) {
-					bids_min = val.first;
-					bids_amount = val.second;
-				}
-			}
-			bid_min_invalidated = false;
-		}
-
-		if (ask_max_invalidated) {
-			bool not_set = true;
-
-			for (auto val : asks) {
-				if (not_set) {
-					not_set = false;
-					asks_max = val.first;
-					asks_amount = val.second;
-				}
-				if (val.first > asks_max) {
-					asks_max = val.first;
-					asks_amount = val.second;
-				}
-			}
-			ask_max_invalidated = false;
-		}
+		FindMaxonUnorderedMaps(bids_min, bids_amount, asks_max, asks_amount, asks, bids, bid_min_invalidated, ask_max_invalidated)
 
 state.ResumeTiming();
 	}
@@ -350,56 +193,10 @@ state.PauseTiming (); /*
 		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
 
-		if (flag) { // If first
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) 
-					asks.insert(asks.begin(), {(*it).first, (*it).second});
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it)
-					bids.insert(bids.begin(), {(*it).first, (*it).second});
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						asks.insert(asks.begin(), {it->first, it->second});
-					else
-						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2)
-							if (it2->first == it->first) {
-								asks.erase(it2);
-								break;
-							}
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						bids.insert(bids.begin(), {it->first, it->second});
-					else
-						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
-							if (it2->first == it->first) {
-								bids.erase(it2);
-								break;
-							}
-				}
-			}
-		}
+		InsertVectorsonLists(a, b, asks, bids, flag)
 
 state.ResumeTiming ();
-		std::pair <double, unsigned long> mina;
-		for (auto x : asks)
-			if (x.first < mina.first)
-				mina = x;
-		ba_price = mina.first;
-		ba_amount = mina.second;
-		std::pair <double, unsigned long> maxb;
-		for (auto x : bids)
-			if (x.first > maxb.first)
-				maxb = x;
-		bb_price = maxb.first;
-		bb_amount = maxb.second;
+		FindMaxonLists(ba_price, ba_amount, bb_price, bb_amount, asks, bids)
 state.PauseTiming();
 	}
 //	std::cout << max << std::endl;
@@ -432,39 +229,9 @@ state.PauseTiming ();
 		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
 
-		if (flag) { // If first
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) 
-					asks.insert({(*it).first, (*it).second});
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it)
-					bids.insert({(*it).first, (*it).second});
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						asks.insert({it->first, it->second});
-					else
-						asks.erase(it->first);
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
-						bids.insert({it->first, it->second});
-					else
-						bids.erase(it->first);
-				}
-			}
-		}
+		InsertVectorsonMaps(a, b, asks, bids, flag)
 state.ResumeTiming();
-		ba_price = (*(asks.rbegin())).first;
-		ba_amount = (*(asks.rbegin())).second;
-		bb_price = (*(bids.begin())).first;
-		bb_amount = (*(bids.begin())).second;
+		FindMaxonMaps(ba_price, ba_amount, bb_price, bb_amount, asks, bids)
 	}
 }
 // Register the function as a benchmark
@@ -496,92 +263,9 @@ state.PauseTiming ();
 		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
 		vals.clear();
 
-		if (flag) {
-			if (!a.empty())
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					if (!ask_max_invalidated && ((*it).first > asks_max)) {
-						asks_max = (*it).first;
-						asks_amount = (*it).second;
-					}
-					asks.insert({(*it).first, (*it).second});
-				}
-			if (!b.empty())
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					if (!bid_min_invalidated && ((*it).first < bids_min)) {
-						bids_min = (*it).first;
-						bids_amount = (*it).second;
-					}
-					bids.insert({(*it).first, (*it).second});
-				}
-			flag = false;
-		} else {
-			if (!(a.empty())) {
-				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0) {
-						if (!ask_max_invalidated && ((*it).first > asks_max)) {
-							asks_max = (*it).first;
-							asks_amount = (*it).second;
-						}
-						asks.insert({(*it).first, (*it).second});
-					} else {
-						asks.erase(it->first);
-						if (it->first == asks_max)
-							ask_max_invalidated = true;
-					}
-				}
-			}
-			if (!(b.empty())) {
-				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0) {
-						if (!bid_min_invalidated && ((*it).first < bids_min)) {
-							bids_min = (*it).first;
-							bids_amount = (*it).second;
-						}
-						bids.insert({(*it).first, (*it).second});
-					} else {
-						bids.erase(it->first);
-						if (it->first == bids_min)
-							bid_min_invalidated = true;
-					}
-				}
-			}
-		}
+		InsertVectorsonUnorderedMaps(a, b, asks, bids, flag, bid_min_invalidated, ask_max_invalidated, bids_min, bids_amount, asks_max, asks_amount)
 state.ResumeTiming();
-		if (bid_min_invalidated) {
-			bool not_set = true;
-
-			for (auto val : bids) {
-				if (not_set) {
-					not_set = false;
-					bids_min = val.first;
-					bids_amount = val.second;
-				}
-				if (val.first < bids_min) {
-					bids_min = val.first;
-					bids_amount = val.second;
-				}
-			}
-			bid_min_invalidated = false;
-		}
-
-		if (ask_max_invalidated) {
-			bool not_set = true;
-
-			for (auto val : asks) {
-				if (not_set) {
-					not_set = false;
-					asks_max = val.first;
-					asks_amount = val.second;
-				}
-				if (val.first > asks_max) {
-					asks_max = val.first;
-					asks_amount = val.second;
-				}
-			}
-			ask_max_invalidated = false;
-		}
+		FindMaxonUnorderedMaps(bids_min, bids_amount, asks_max, asks_amount, asks, bids, bid_min_invalidated, ask_max_invalidated)
 state.PauseTiming();
 	}
 	//std::cout << max << std::endl;
