@@ -34,7 +34,6 @@ On quad-core processor:
     BM_Insert_On_Lists/iterations:1000000                3821 ns         3826 ns      1000000
     BM_Insert_On_Maps/iterations:1000000                 3636 ns         3642 ns      1000000
     BM_Insert_On_UnorderedMaps/iterations:1000000        3629 ns         3633 ns      1000000
-
     BM_FindMax_On_Lists/iterations:1000000               5265 ns         5194 ns      1000000
     BM_FindMax_On_Maps/iterations:1000000                1827 ns         1816 ns      1000000
     BM_FindMax_On_UnorderedMaps/iterations:1000000       5042 ns         5033 ns      1000000
@@ -51,7 +50,7 @@ On eight-core processor:
     BM_FindMax_On_Maps/iterations:1000000                 330 ns          332 ns      1000000
     BM_FindMax_On_UnorderedMaps/iterations:1000000        977 ns          982 ns      1000000
 
-So we see that Unordered Maps (usually based on Hash - Tables) and Maps (ususally implemented as Red and Black Trees) on Insertion, but Unordered Maps are dramatically slower than Maps. Lists failure goes without saying.
+So we see that Unordered Maps (usually based on Hash - Tables) and Maps (ususally implemented as Red and Black Trees) are operating nearly at the same speed on Insertion, but Unordered Maps are dramatically slower than Maps on Maximum Search, since (I guess), maximum invalidation is usual, so we have to find it again every time with O(N) complexity. Lists insuitability goes without saying.
 
 ## Conclusion
 
