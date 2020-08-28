@@ -27,10 +27,10 @@ std::vector <std::pair<double, unsigned long>> generateRandomUpdate(double min, 
 	srand(time(NULL));
 	std::vector <std::pair<double, unsigned long>> v;
 	for (int i = 0; i < (std::rand() % 10); ++i)
-		if (noNulls || values.empty()) {
+		if (noNulls || cvalues.empty()) {
 			v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 		} else {
-			if (((rand() % 3 > 0) || cvalues.empty()) && cvalues.size() < 20) {
+			if ((rand() % 3 > 0) && cvalues.size() < 20) {
 				v.push_back(std::make_pair(values[rand() % 20], 1 + (rand() % 100)));
 			} else {
 				auto it = cvalues.begin();
@@ -63,15 +63,18 @@ state.PauseTiming ();
 		++q;
 */
 		std::vector <double> vals;
-		for (auto it = asks.begin(); it != asks.end(); ++it)
-			vals.push_back(it->first);
+		if (!asks.empty())
+			for (auto it = asks.begin(); it != asks.end(); ++it)
+				vals.push_back(it->first);
 		a = generateRandomUpdate(1000.0, 1100.0, flag, vals);
-		vals.clear();
-
-		for (auto it = bids.begin(); it != bids.end(); ++it)
-			vals.push_back(it->first);
+		if (!vals.empty())
+			vals.clear();
+		if (!bids.empty())
+			for (auto it = bids.begin(); it != bids.end(); ++it)
+				vals.push_back(it->first);
 		b = generateRandomUpdate(1100.0, 1200.0, flag, vals);
-		vals.clear();
+		if (!vals.empty())
+			vals.clear();
 state.ResumeTiming();
 
 		if (flag) { // If first
@@ -85,43 +88,45 @@ state.ResumeTiming();
 		} else {
 			if (!(a.empty())) {
 				for (auto it = a.begin(); it != a.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
+					if (it->second != 0 || asks.empty()) {
 						asks.insert(asks.begin(), {it->first, it->second});
-					else
-						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2)
-							if (it2->first == it->first)
+					} else {
+						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2) {
+							if (it2->first == it->first) {
 								asks.erase(it2);
+								break;
+							}
+						}
+					}
 				}
 			}
 			if (!(b.empty())) {
 				for (auto it = b.begin(); it != b.end(); ++it) {
-					//std::cout << (*it)[0] << ' ' << (*it)[1] << std::endl;
-					if (it->second != 0)
+					if (it->second != 0 || bids.empty())
 						bids.insert(bids.begin(), {it->first, it->second});
 					else
 						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
-							if (it2->first == it->first)
+							if (it2->first == it->first) {
 								bids.erase(it2);
+								break;
+							}
 				}
 			}
 		}
 
 state.PauseTiming ();
-		auto mina = std::min(asks.begin(), 
-							asks.end(), 
-							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
-			return a->first < b->first;
-		});
-		ba_price = mina->first;
-		ba_amount = mina->second;
-		auto maxb = std::max(bids.begin(), 
-							bids.end(), 
-							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
-			return a->first < b->first;
-		});
-		bb_price = maxb->first;
-		bb_amount = maxb->second;
+		std::pair <double, unsigned long> mina;
+		for (auto x : asks)
+			if (x.first < mina.first)
+				mina = x;
+		ba_price = mina.first;
+		ba_amount = mina.second;
+		std::pair <double, unsigned long> maxb;
+		for (auto x : bids)
+			if (x.first > maxb.first)
+				maxb = x;
+		bb_price = maxb.first;
+		bb_amount = maxb.second;
 state.ResumeTiming();
 	}
 /*
@@ -132,6 +137,7 @@ state.ResumeTiming();
 }
 // Register the function as a benchmark
 BENCHMARK(BM_Insert_On_Lists)->Iterations(1000000);
+
 
 static void BM_Insert_On_Maps(benchmark::State& state) {
 	std::map <double, unsigned long> asks, bids;
@@ -360,8 +366,10 @@ state.PauseTiming (); /*
 						asks.insert(asks.begin(), {it->first, it->second});
 					else
 						for (auto it2 = asks.begin(); it2 != asks.end(); ++it2)
-							if (it2->first == it->first)
+							if (it2->first == it->first) {
 								asks.erase(it2);
+								break;
+							}
 				}
 			}
 			if (!(b.empty())) {
@@ -371,27 +379,27 @@ state.PauseTiming (); /*
 						bids.insert(bids.begin(), {it->first, it->second});
 					else
 						for (auto it2 = bids.begin(); it2 != bids.end(); ++it2)
-							if (it2->first == it->first)
+							if (it2->first == it->first) {
 								bids.erase(it2);
+								break;
+							}
 				}
 			}
 		}
 
 state.ResumeTiming ();
-		auto mina = std::min(asks.begin(), 
-							asks.end(), 
-							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
-			return a->first < b->first;
-		});
-		ba_price = mina->first;
-		ba_amount = mina->second;
-		auto maxb = std::max(bids.begin(), 
-							bids.end(), 
-							[] (const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &a, const std::__1::__list_iterator<std::__1::pair<double, unsigned long>, void *> &b) {
-			return a->first < b->first;
-		});
-		bb_price = maxb->first;
-		bb_amount = maxb->second;
+		std::pair <double, unsigned long> mina;
+		for (auto x : asks)
+			if (x.first < mina.first)
+				mina = x;
+		ba_price = mina.first;
+		ba_amount = mina.second;
+		std::pair <double, unsigned long> maxb;
+		for (auto x : bids)
+			if (x.first > maxb.first)
+				maxb = x;
+		bb_price = maxb.first;
+		bb_amount = maxb.second;
 state.PauseTiming();
 	}
 //	std::cout << max << std::endl;
@@ -580,7 +588,6 @@ state.PauseTiming();
 }
 // Register the function as a benchmark
 BENCHMARK(BM_FindMax_On_UnorderedMaps)->Iterations(1000000);
-
 /*
 static void BM_FindMax_On_AVL_Tree(benchmark::State& state) {
 	AVL asks, bids;
@@ -656,7 +663,6 @@ state.PauseTiming();
 //	std::cout << max << std::endl;
 }
 // Register the function as a benchmark
-BENCHMARK(BM_FindMax_On_Lists)->Iterations(1000000);
+BENCHMARK(BM_FindMax_On_AVL_Tree)->Iterations(1000000);
 */
-
 BENCHMARK_MAIN();
