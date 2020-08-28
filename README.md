@@ -9,7 +9,7 @@ Build and test benchmarks as:
     
 Build and test the programm itself:
 
-    make && ./benchmark && make clean
+    make && ./huobi-analyzer && make clean
 
 ## Data Structures and their complexity
 
